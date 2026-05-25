@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -17,8 +17,48 @@ const buttons = [
 ];
 
 export default function App() {
+  const [currentValue, setCurrentValue] = useState("0");
+
+  const handleNumber = (value) => {
+    if (value === "." && currentValue.includes(".")) {
+      return;
+    }
+
+    if (currentValue === "0" && value !== ".") {
+      setCurrentValue(value);
+      return;
+    }
+
+    setCurrentValue(currentValue + value);
+  };
+
+  const clearCalculator = () => {
+    setCurrentValue("0");
+  };
+
+  const deleteLastSymbol = () => {
+    if (currentValue.length === 1) {
+      setCurrentValue("0");
+      return;
+    }
+
+    setCurrentValue(currentValue.slice(0, -1));
+  };
+
   const handlePress = (value) => {
-    console.log("Pressed:", value);
+    if (!Number.isNaN(Number(value)) || value === ".") {
+      handleNumber(value);
+      return;
+    }
+
+    if (value === "C") {
+      clearCalculator();
+      return;
+    }
+
+    if (value === "⌫") {
+      deleteLastSymbol();
+    }
   };
 
   return (
@@ -27,8 +67,8 @@ export default function App() {
 
       <View style={styles.calculator}>
         <View style={styles.display}>
-          <Text style={styles.expression}>Калькулятор</Text>
-          <Text style={styles.result}>0</Text>
+          <Text style={styles.expression}>Введення числа</Text>
+          <Text style={styles.result}>{currentValue}</Text>
         </View>
 
         <View style={styles.keyboard}>
