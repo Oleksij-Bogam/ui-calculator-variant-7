@@ -16,8 +16,54 @@ const buttons = [
   ["0", ".", "="],
 ];
 
+const operators = ["+", "-", "×", "÷"];
+
 export default function App() {
   const [currentValue, setCurrentValue] = useState("0");
+  const [previousValue, setPreviousValue] = useState(null);
+  const [operator, setOperator] = useState(null);
+  const [expression, setExpression] = useState("");
+
+  const formatResult = (number) => {
+    if (!Number.isFinite(number)) {
+      return "Помилка";
+    }
+
+    return Number(number.toFixed(8)).toString();
+  };
+
+  const calculate = () => {
+    if (previousValue === null || operator === null) {
+      return;
+    }
+
+    const firstNumber = Number(previousValue);
+    const secondNumber = Number(currentValue);
+    let result = 0;
+
+    if (operator === "+") {
+      result = firstNumber + secondNumber;
+    }
+
+    if (operator === "-") {
+      result = firstNumber - secondNumber;
+    }
+
+    if (operator === "×") {
+      result = firstNumber * secondNumber;
+    }
+
+    if (operator === "÷") {
+      result = firstNumber / secondNumber;
+    }
+
+    const formattedResult = formatResult(result);
+
+    setExpression(`${previousValue} ${operator} ${currentValue} =`);
+    setCurrentValue(formattedResult);
+    setPreviousValue(null);
+    setOperator(null);
+  };
 
   const handleNumber = (value) => {
     if (value === "." && currentValue.includes(".")) {
@@ -32,8 +78,18 @@ export default function App() {
     setCurrentValue(currentValue + value);
   };
 
+  const handleOperator = (selectedOperator) => {
+    setPreviousValue(currentValue);
+    setOperator(selectedOperator);
+    setExpression(`${currentValue} ${selectedOperator}`);
+    setCurrentValue("0");
+  };
+
   const clearCalculator = () => {
     setCurrentValue("0");
+    setPreviousValue(null);
+    setOperator(null);
+    setExpression("");
   };
 
   const deleteLastSymbol = () => {
@@ -48,6 +104,16 @@ export default function App() {
   const handlePress = (value) => {
     if (!Number.isNaN(Number(value)) || value === ".") {
       handleNumber(value);
+      return;
+    }
+
+    if (operators.includes(value)) {
+      handleOperator(value);
+      return;
+    }
+
+    if (value === "=") {
+      calculate();
       return;
     }
 
@@ -67,7 +133,7 @@ export default function App() {
 
       <View style={styles.calculator}>
         <View style={styles.display}>
-          <Text style={styles.expression}>Введення числа</Text>
+          <Text style={styles.expression}>{expression || "Калькулятор"}</Text>
           <Text style={styles.result}>{currentValue}</Text>
         </View>
 
@@ -80,7 +146,7 @@ export default function App() {
                   style={[
                     styles.button,
                     button === "=" && styles.equalsButton,
-                    ["+", "-", "×", "÷"].includes(button) && styles.operatorButton,
+                    operators.includes(button) && styles.operatorButton,
                     ["C", "⌫"].includes(button) && styles.controlButton,
                   ]}
                   onPress={() => handlePress(button)}
