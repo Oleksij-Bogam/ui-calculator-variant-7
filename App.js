@@ -39,6 +39,15 @@ export default function App() {
 
     const firstNumber = Number(previousValue);
     const secondNumber = Number(currentValue);
+
+    if (operator === "÷" && secondNumber === 0) {
+      setExpression(`${previousValue} ${operator} ${currentValue} =`);
+      setCurrentValue("Помилка: ділення на нуль");
+      setPreviousValue(null);
+      setOperator(null);
+      return;
+    }
+
     let result = 0;
 
     if (operator === "+") {
@@ -66,6 +75,12 @@ export default function App() {
   };
 
   const handleNumber = (value) => {
+    if (currentValue.startsWith("Помилка")) {
+      setCurrentValue(value === "." ? "0." : value);
+      setExpression("");
+      return;
+    }
+
     if (value === "." && currentValue.includes(".")) {
       return;
     }
