@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  ScrollView,
 } from "react-native";
 
 const buttons = [
@@ -23,6 +24,7 @@ export default function App() {
   const [previousValue, setPreviousValue] = useState(null);
   const [operator, setOperator] = useState(null);
   const [expression, setExpression] = useState("");
+  const [history, setHistory] = useState([]);
 
   const formatResult = (number) => {
     if (!Number.isFinite(number)) {
@@ -32,6 +34,10 @@ export default function App() {
     return Number(number.toFixed(8)).toString();
   };
 
+  const addToHistory = (record) => {
+    setHistory((previousHistory) => [record, ...previousHistory].slice(0, 10));
+  };
+
   const calculate = () => {
     if (previousValue === null || operator === null) {
       return;
@@ -39,12 +45,16 @@ export default function App() {
 
     const firstNumber = Number(previousValue);
     const secondNumber = Number(currentValue);
+    const expressionText = `${previousValue} ${operator} ${currentValue}`;
 
     if (operator === "÷" && secondNumber === 0) {
-      setExpression(`${previousValue} ${operator} ${currentValue} =`);
-      setCurrentValue("Помилка: ділення на нуль");
+      const errorText = "Помилка: ділення на нуль";
+
+      setExpression(`${expressionText} =`);
+      setCurrentValue(errorText);
       setPreviousValue(null);
       setOperator(null);
+      addToHistory(`${expressionText} = ${errorText}`);
       return;
     }
 
@@ -68,10 +78,11 @@ export default function App() {
 
     const formattedResult = formatResult(result);
 
-    setExpression(`${previousValue} ${operator} ${currentValue} =`);
+    setExpression(`${expressionText} =`);
     setCurrentValue(formattedResult);
     setPreviousValue(null);
     setOperator(null);
+    addToHistory(`${expressionText} = ${formattedResult}`);
   };
 
   const handleNumber = (value) => {
@@ -94,6 +105,10 @@ export default function App() {
   };
 
   const handleOperator = (selectedOperator) => {
+    if (currentValue.startsWith("Помилка")) {
+      return;
+    }
+
     setPreviousValue(currentValue);
     setOperator(selectedOperator);
     setExpression(`${currentValue} ${selectedOperator}`);
@@ -108,12 +123,21 @@ export default function App() {
   };
 
   const deleteLastSymbol = () => {
+    if (currentValue.startsWith("Помилка")) {
+      clearCalculator();
+      return;
+    }
+
     if (currentValue.length === 1) {
       setCurrentValue("0");
       return;
     }
 
     setCurrentValue(currentValue.slice(0, -1));
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
   };
 
   const handlePress = (value) => {
@@ -149,7 +173,14 @@ export default function App() {
       <View style={styles.calculator}>
         <View style={styles.display}>
           <Text style={styles.expression}>{expression || "Калькулятор"}</Text>
-          <Text style={styles.result}>{currentValue}</Text>
+          <Text
+            style={[
+              styles.result,
+              currentValue.startsWith("Помилка") && styles.errorText,
+            ]}
+          >
+            {currentValue}
+          </Text>
         </View>
 
         <View style={styles.keyboard}>
@@ -179,6 +210,26 @@ export default function App() {
             </View>
           ))}
         </View>
+
+        <View style={styles.historyHeader}>
+          <Text style={styles.historyTitle}>Історія</Text>
+
+          <TouchableOpacity onPress={clearHistory}>
+            <Text style={styles.clearHistoryText}>Очистити</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.historyList}>
+          {history.length === 0 ? (
+            <Text style={styles.emptyHistory}>Історія поки порожня</Text>
+          ) : (
+            history.map((item, index) => (
+              <Text key={`${item}-${index}`} style={styles.historyItem}>
+                {item}
+              </Text>
+            ))
+          )}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -212,9 +263,13 @@ const styles = StyleSheet.create({
   },
   result: {
     color: "#f9fafb",
-    fontSize: 46,
+    fontSize: 42,
     fontWeight: "700",
     textAlign: "right",
+  },
+  errorText: {
+    color: "#f87171",
+    fontSize: 24,
   },
   keyboard: {
     gap: 10,
@@ -225,7 +280,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    minHeight: 70,
+    minHeight: 64,
     borderRadius: 16,
     backgroundColor: "#374151",
     justifyContent: "center",
@@ -242,10 +297,42 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#f9fafb",
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "600",
   },
   equalsButtonText: {
     color: "#052e16",
+  },
+  historyHeader: {
+    marginTop: 18,
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  historyTitle: {
+    color: "#f9fafb",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  clearHistoryText: {
+    color: "#93c5fd",
+    fontSize: 14,
+  },
+  historyList: {
+    maxHeight: 120,
+    backgroundColor: "#111827",
+    borderRadius: 14,
+    padding: 10,
+  },
+  emptyHistory: {
+    color: "#6b7280",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  historyItem: {
+    color: "#d1d5db",
+    fontSize: 15,
+    marginBottom: 6,
   },
 });
